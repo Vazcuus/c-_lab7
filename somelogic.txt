@@ -1,0 +1,45 @@
+
+    void find_files(const boost::filesystem::path &dir_path)
+{
+    for (const boost::filesystem::directory_entry& x : boost::filesystem::directory_iterator(dir_path))
+    {
+        if (boost::filesystem::is_regular_file(x.path()))
+        {
+            std::string output = x.path().string();
+            std::cout << output << std::endl;
+            
+            std::ifstream file(output);
+            auto size = boost::filesystem::file_size(output);
+
+            size_t sizeWithBinaryZero = size + (S - size%S);
+            size_t amountBlocks = sizeWithBinaryZero/S;
+
+            std::vector<std::string> Blocks(amountBlocks);
+            std::vector<uint32_t> HashBlocks(amountBlocks);
+            int i =0;
+            while (i < amountBlocks)
+            {
+                char buffer[S+1];
+                file.read(buffer, S);
+                size_t bytes_read = file.gcount();
+                if (bytes_read == 0) break;
+                buffer[bytes_read] ='\0';
+                Blocks[i] = buffer;
+                i++;
+            }
+            Blocks[amountBlocks-1] += std::string((S-size%S), '\0');
+            ShowVector(Blocks);
+            for (auto i = 0; i < amountBlocks; i++)
+            {
+                HashBlocks[i] = GetCrc32(Blocks[i]);
+            }
+            ShowVector(HashBlocks);
+            
+            file.close();
+        }
+        else if (boost::filesystem::is_directory(x.path()))
+        {
+            find_files(x.path());
+        }
+    }
+}
