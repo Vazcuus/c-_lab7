@@ -1,3 +1,0 @@
-Y:/Programming/c-_lab7/build/CMakeFiles/bayan.dir
-Y:/Programming/c-_lab7/build/CMakeFiles/edit_cache.dir
-Y:/Programming/c-_lab7/build/CMakeFiles/rebuild_cache.dir

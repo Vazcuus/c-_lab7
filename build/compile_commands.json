@@ -1,8 +1,0 @@
-[
-{
-  "directory": "Y:/Programming/c-_lab7/build",
-  "command": "C:\\msys64\\mingw64\\bin\\c++.exe -DBOOST_ATOMIC_DYN_LINK -DBOOST_ATOMIC_NO_LIB -DBOOST_FILESYSTEM_DYN_LINK -DBOOST_FILESYSTEM_NO_LIB -DBOOST_REGEX_DYN_LINK -DBOOST_REGEX_NO_LIB -g -o CMakeFiles\\bayan.dir\\main.cpp.obj -c Y:\\Programming\\c-_lab7\\main.cpp",
-  "file": "Y:\\Programming\\c-_lab7\\main.cpp",
-  "output": "CMakeFiles\\bayan.dir\\main.cpp.obj"
-}
-]
