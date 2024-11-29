@@ -9,7 +9,7 @@ int main(int argc, char* argv[])
     std::string paramScan = argv[3]; // scan all directories or only directory
     std::string sizeBlock = argv[4]; // size block read text
     std::string maskFile = argv[5]; // file mask
-s
+
     std::vector<boost::filesystem::path> p;
     std::stringstream s(directory);
     std::string separated;
