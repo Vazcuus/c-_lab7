@@ -5,8 +5,14 @@
 #include <boost/crc.hpp>
 #include <string>
 #include <fstream>
+#include <map>
+#include <algorithm>
+#include <sstream>
 
-static const int S = 5;
+char change_case(char c)
+{
+    return std::tolower(c);
+}
 
 uint32_t GetCrc32(const std::string& my_string) {
 
@@ -25,19 +31,32 @@ void ShowVector(std::vector<T> vector)
     }
 }
 
-std::vector<boost::filesystem::path> find_files(std::string paramScan, std::string black_directory, std::vector<boost::filesystem::path> &vectorFiles, boost::filesystem::path dir_path)
+std::set<boost::filesystem::path> find_files(std::string maskFile,std::string paramScan, std::string black_directory, std::set<boost::filesystem::path> &vectorFiles, boost::filesystem::path dir_path)
 {
-    
-    for (const boost::filesystem::directory_entry& x : boost::filesystem::directory_iterator(dir_path))
+    std::vector<std::string> black_directories;
+    std::stringstream s(black_directory);
+    std::string separated;
+    while(std::getline(s, separated, ','))
     {
-        if (x.path() == black_directory) continue;
+        black_directories.push_back(separated);
+    }
+
+    for (const boost::filesystem::directory_entry &x : boost::filesystem::directory_iterator(dir_path))
+    {
+        if (std::find(black_directories.begin(), black_directories.end(), x.path()) != black_directories.end())
+            continue;
+        std::string filename = x.path().filename().string();
+        std::transform(filename.begin(), filename.end(), filename.begin(), change_case);
+        std::transform(maskFile.begin(), maskFile.end(), maskFile.begin(), change_case);
+
         if (boost::filesystem::is_regular_file(x.path()))
         {
-            vectorFiles.push_back(x.path());
+            if (filename.find(maskFile) != std::string::npos)
+                vectorFiles.insert(x.path());
         }
-        else if (paramScan == "1" || boost::filesystem::is_directory(x.path()))
+        else if (paramScan == "1" && boost::filesystem::is_directory(x.path()))
         {
-            find_files(paramScan, black_directory, vectorFiles, x.path());
+            find_files(maskFile, paramScan, black_directory, vectorFiles, x.path());
         }
     }
     return vectorFiles;
@@ -58,23 +77,23 @@ void ReadOneBlockS(int index, std::fstream &file, int S, std::vector<std::vector
     readed = GetCrc32(buffer);
     HashCodes[index].push_back(readed);
 }
-void find_duplicates(int sizeBlock ,std::vector<boost::filesystem::path> vectorFiles, std::vector<std::vector<uint32_t>> &HashCodes)
+void find_duplicates(int sizeBlock, std::set<boost::filesystem::path> vectorFiles, std::vector<std::vector<uint32_t>> &HashCodes, std::map<std::string, std::string> &texts)
 {
     bool isEqual = true;
     for (auto indexFile1 = 0; indexFile1 < vectorFiles.size(); indexFile1++)
     {
         for (auto indexFile2 = indexFile1+1; indexFile2 < vectorFiles.size(); indexFile2++)
         {
-            std::fstream fileA(vectorFiles[indexFile1]);
-            auto size_fileA = boost::filesystem::file_size(vectorFiles[indexFile1]);
-            std::fstream fileB(vectorFiles[indexFile2]);
-            auto size_fileB = boost::filesystem::file_size(vectorFiles[indexFile2]);
+            std::fstream fileA(*std::next(vectorFiles.begin(),indexFile1));
+            auto size_fileA = boost::filesystem::file_size(*std::next(vectorFiles.begin(),indexFile1));
+            std::fstream fileB(*std::next(vectorFiles.begin(),indexFile2));
+            auto size_fileB = boost::filesystem::file_size(*std::next(vectorFiles.begin(),indexFile2));
 
-            size_t size_fileA_withZero = size_fileA + (S-size_fileA%S);
-            size_t size_fileB_withZero = size_fileB + (S-size_fileB%S);
+            size_t size_fileA_withZero = size_fileA + (sizeBlock-size_fileA%sizeBlock);
+            size_t size_fileB_withZero = size_fileB + (sizeBlock-size_fileB%sizeBlock);
 
-            size_t totalBlocksA = size_fileA_withZero/S;
-            size_t totalBlocksB = size_fileB_withZero/S;
+            size_t totalBlocksA = size_fileA_withZero/sizeBlock;
+            size_t totalBlocksB = size_fileB_withZero/sizeBlock;
 
             if (totalBlocksA != totalBlocksB)
                 continue;
@@ -99,8 +118,9 @@ void find_duplicates(int sizeBlock ,std::vector<boost::filesystem::path> vectorF
             }
             if (isEqual)
             {
-                std::cout << vectorFiles[indexFile1] << "\n" << vectorFiles[indexFile2] << '\n';
-                vectorFiles.erase(vectorFiles.begin()+indexFile2);
+                if (texts[(*std::next(vectorFiles.begin(),indexFile1)).string()] != ('\n'+(*std::next(vectorFiles.begin(),indexFile2)).string()))
+                    texts[(*std::next(vectorFiles.begin(),indexFile1)).string()] += '\n' + (*std::next(vectorFiles.begin(),indexFile2)).string();
+                vectorFiles.erase(*std::next(vectorFiles.begin(),indexFile2));
                 HashCodes.erase(HashCodes.begin()+indexFile2);
                 indexFile2--;
             }        
