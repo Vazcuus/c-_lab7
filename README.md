@@ -6,5 +6,5 @@
 
 # Перед работой с утилитой.
 Склонировать репозиторий и выполнить сборку.
-```git clone https://github.com/Vazcuus/c-_lab7/
+```git clone https://github.com/Vazcuus/c-_lab7```
 Сборка осуществляется через CMake.
